@@ -5,7 +5,6 @@ extern "C" {
 #endif
 
   #include "main.h"
-  #include "Arduino.h"
 
   void core0_setup();
   void core1_setup();

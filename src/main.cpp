@@ -18,6 +18,17 @@
 //   delay(5);
 // )
 
+#define TASK_NAME(core_number) "core ## core_number ## task"
+#define TASK_HANDLE(core_number) core ## core_number ## _task
+#define CREATE_TASK(core_number) \
+  xTaskCreatePinnedToCore([](void* _) TASK_CODE(core_number), TASK_NAME(core_number), STACK_BYTE_SIZE, NULL, 100, &TASK_HANDLE(core_number), core_number);
+#define TASK_CODE(core_number) { \
+  core ## core_number ## _setup(); \
+  while(1) { \
+    core ## core_number ## _loop(); \
+  } \
+}
+
 static SemaphoreHandle_t synchronize_semaphore;
 static TaskHandle_t core0_task;
 static TaskHandle_t core1_task;
@@ -34,41 +45,23 @@ void setup() {
   // Semaphore for synchronized block
   synchronize_semaphore = xSemaphoreCreateMutex();
 
-  #define TASK_LAMBDA(__function_code__) [](void* _) { __function_code__ }
-  #define CREATE_TASK(__name__, __task_handle__, __core_id__, __function_code__) \
-    do { \
-      xTaskCreatePinnedToCore(TASK_LAMBDA(__function_code__), __name__, STACK_BYTE_SIZE, NULL, 100, &__task_handle__, __core_id__); \
-      delay(500); \
-    } while(0)
-
   // Create the setup and loop for core 0
-  CREATE_TASK("core0", core0_task, 0, {
-    core0_setup();
-
-    while(1) {
-      core0_loop();
-    }
-  });
+  CREATE_TASK(0);
+  delay(1000);
 
   // Create the setup and loop for core 1
-  CREATE_TASK("core1", core1_task, 1, {
-    core1_setup();
-
-    while(1) {
-      core1_loop();
-    }
-  });
-
-  // Wait a bit then completely delete the loop/main thread
+  CREATE_TASK(1);
   delay(1000);
+
+  // Completely delete the loop/main thread
   vTaskDelete(NULL);
 }
 
-void _synchronize_semaphore_lock() {
+void semaphore_lock() {
   xSemaphoreTake(synchronize_semaphore, portMAX_DELAY);
 }
 
-void _synchronize_semaphore_unlock() {
+void semaphore_unlock() {
   xSemaphoreGive(synchronize_semaphore);
 }
 
