@@ -57,11 +57,11 @@ void setup() {
   vTaskDelete(NULL);
 }
 
-void semaphore_lock() {
+void _synchronize_semaphore_lock() {
   xSemaphoreTake(synchronize_semaphore, portMAX_DELAY);
 }
 
-void semaphore_unlock() {
+void _synchronize_semaphore_unlock() {
   xSemaphoreGive(synchronize_semaphore);
 }
 
